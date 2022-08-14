@@ -1,8 +1,11 @@
 from lib2to3.pytree import NodePattern
 from math import trunc
 from netrc import NetrcParseError
+from pickle import BINBYTES
 import string
+from turtle import color
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from numpy import genfromtxt
 import numpy as np
 from matplotlib import cm, pyplot as plt
@@ -13,65 +16,111 @@ import networkx as nx
 import networkx.algorithms.community as nx_comm
 import networkx.algorithms as algo
 import community as community_louvain
+import seaborn as sns
 
-votes = []
-proposalVoters = []
-with open('../../Snapshot/overall/votes.csv', "r") as f:
-    reader = csv.reader(f, delimiter=",")
-    for i, line in enumerate(reader):
-        votes += line[1:-1]
-        proposalVoters.append(line[1:-1])
-c = collections.Counter(votes)
-freq = np.array(list(c.values()))
-for idx in range(len(proposalVoters)-len(c.values())):
-    freq = np.insert(freq, 0, 0)
-participation = np.empty(len(proposalVoters))
-for idx, prop in enumerate(proposalVoters):
-    participation[idx] = len(prop)
-assert(len(participation) == len(proposalVoters))
+###################### READ CSVS ###########################
+proposals = genfromtxt('../../Snapshot/overall/proposals.csv',
+                       delimiter="//")
+emptyColumn = np.zeros((len(proposals[:, 0]), 1))
+proposals = np.append(proposals, emptyColumn, axis=1)
+spaces = genfromtxt('../../Snapshot/overall/spacesOld.csv',
+                    delimiter=',', dtype=str)
+proposalsStr = genfromtxt(
+    '../../Snapshot/overall/proposals.csv', delimiter="//", dtype=str)
 
+################### CLEAN & COMBINE DATA ####################
+assert(len(proposalsStr[:, 0]) == len(proposals[:, 0]))
+for idx, propStr in enumerate(proposalsStr):
+    space = spaces[spaces[:, 0] == propStr[2], :]
+    if len(space) == 0:
+        space = [[0, 0]]
+    proposals[idx][-1] = int(space[0][1])
+proposals = proposals[proposals[:, -1] >= 50, :]
+proposals = proposals[~np.isnan(proposals[:, 5]), :]
+emptyColumn = np.zeros((len(proposals[:, 0]), 1))
+proposals = np.append(proposals, emptyColumn, axis=1)
+for prop in proposals:
+    if prop[-2] >= prop[-3]:
+        prop[-1] = prop[-3]/prop[-2]
+    else:
+        prop[-1] = 0
 
-proposals = genfromtxt('../../Snapshot/overall/proposals.csv', delimiter=",")
-proposals = proposals[participation != 0, :]
-proposals = proposals[~np.isnan(proposals[:, 3]), :]
-participationWithoutZero = participation[participation != 0]
 
 ###################### CONTROVERCY ###########################
-propOutcomes = np.empty((len(proposals[:, 1]), 3))
-
+propOutcomes = np.empty((len(proposals[:, 1]), 4))
 for idx, prop in enumerate(proposals):
-    propOutcomes[idx][0] = participationWithoutZero[idx]
-    if prop[3] > prop[4]:
-        propOutcomes[idx][1] = prop[3]/(prop[3]+prop[4])
+    propOutcomes[idx][0] = prop[-1]
+    propOutcomes[idx][3] = prop[-2]
+    if prop[5] > prop[6]:
+        propOutcomes[idx][1] = prop[5]/(prop[5]+prop[6])
         propOutcomes[idx][2] = 1
-    elif prop[4] > prop[3]:
-        propOutcomes[idx][1] = prop[4]/(prop[3]+prop[4])
+    elif prop[6] > prop[5]:
+        propOutcomes[idx][1] = prop[6]/(prop[5]+prop[6])
         propOutcomes[idx][2] = 0
     else:
         propOutcomes[idx][1] = 0
         propOutcomes[idx][2] = 0
+propOutcomes = propOutcomes[propOutcomes[:, 1] != 0, :]
 
-# Problem is the scores are so high because they are in tokens not individuals votes
-# max = np.argmax(proposals[:, 5])
-# print(proposals[max])
-# propOutcomes = np.delete(propOutcomes, max, 0)
-# propOutcomes = propOutcomes[propOutcomes[:, 0] >= 1000000, :]
 
-fig9, ax9 = plt.subplots()
-ax9.scatter(propOutcomes[:, 0], propOutcomes[:, 1],
-            c=propOutcomes[:, 2], cmap='RdYlGn')
-ax9.set_ylim(0.5)
-ax9.set_xscale('log')
-ax9.set_ylabel("Size of Majority")
-ax9.set_xlabel("Participation")
-fig10, ax10 = plt.subplots()
-ax10.hist(propOutcomes[:, 1])
-ax10.set_ylabel("Frequency")
-ax10.set_xlabel("Size of Majority")
+# Controvercy histrogram
+fig2, ax2 = plt.subplots()
+ax2.hist(propOutcomes[:, 1], edgecolor='white', linewidth=1.2, color="#4CB391")
+ax2.set_yscale("log")
+ax2.set_ylabel("Frequency")
+ax2.set_xlabel("Size of Majority")
 
-fig11, ax11 = plt.subplots()
-print(np.average(participationWithoutZero))
-ax11.hist(participationWithoutZero)
-ax11.set_yscale('log')
+# Controvercy hexbin
+fig3, ax3 = plt.subplots()
+
+ax3.hexbin(propOutcomes[:, 0], propOutcomes[:, 1],
+           gridsize=40, cmap="Reds", bins="log")
+ax3.set_ylim(0.5, 1)
+ax3.set_xlim(0, 1)
+
+# Controvercy jointplot hex
+sns.set_theme(style="ticks")
+s1 = sns.jointplot(x=propOutcomes[:, 0], y=propOutcomes[:, 1], kind="hex",
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20))
+s1.ax_joint.set_xlabel('Quorum')
+s1.ax_joint.set_ylabel('Majority')
+
+# Controvercy by DAO size
+sns.set_theme(style="ticks")
+s2 = sns.jointplot(x=propOutcomes[:, 3], y=propOutcomes[:, 1], kind="hex",
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20), color="#4CB391")
+s2.ax_joint.set_xlabel('Size')
+s2.ax_joint.set_ylabel('Majority')
+
+# Quorum by DAO size
+sns.set_theme(style="ticks")
+s3 = sns.jointplot(x=propOutcomes[:, 3], y=propOutcomes[:, 0], kind="hex",
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20), color="#4CB391")
+s3.ax_joint.set_xlabel('Size')
+s3.ax_joint.set_ylabel('Quorum')
+
+print("Median Size:", np.median(propOutcomes[:, 3]))
+print("Median Quorum:", np.median(propOutcomes[:, 0]))
+print("Median Majority:", np.average(propOutcomes[:, 1]))
 
 plt.show()
+
+
+###################### BACKUP ###########################
+
+# map = np.empty((51, 101))
+# for prop in propOutcomes:
+#     participation = prop[0]
+#     majority = prop[1]
+#     map[int(majority/(1/50))][int(participation/(100000/100))] += 1
+# print(map)
+# map = np.log(map)
+
+# Controvercy Scatter Plot
+# fig1, ax1 = plt.subplots()
+# ax1.scatter(propOutcomes[:, 0], propOutcomes[:, 1],
+#             c=propOutcomes[:, 2], cmap='RdYlGn')
+# ax1.set_ylim(0.5)
+# ax1.set_xscale('log')
+# ax1.set_ylabel("Size of Majority")
+# ax1.set_xlabel("Participation")

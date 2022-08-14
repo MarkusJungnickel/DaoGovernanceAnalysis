@@ -1,7 +1,5 @@
 import axios from "axios";
-import Web3 from "web3";
 import fs from "fs";
-import { exit } from "process";
 
 async function getspaces(): Promise<any> {
   let returnValue: any = [];
@@ -31,7 +29,7 @@ async function getspaces(): Promise<any> {
 }
 
 async function getFollowers() {
-  fs.unlinkSync("./spaces.csv");
+  // fs.unlinkSync("./spaces.csv");
   const spaces = await getspaces();
   for (const space of spaces) {
     let length = 0;
@@ -58,7 +56,7 @@ async function getFollowers() {
           console.log(error);
         });
     }
-    fs.appendFileSync("./spaces.csv", space.id + ",");
+    fs.appendFileSync("./spaces.csv", space.id + "/%/");
     fs.appendFileSync("./spaces.csv", length + "\n");
   }
 }

@@ -1,10 +1,8 @@
 import axios from "axios";
-import Web3 from "web3";
 import fs from "fs";
-import { exit } from "process";
 
 async function getProposals(): Promise<any> {
-  //fs.unlinkSync("./proposals.csv");
+  fs.unlinkSync("./proposals.csv");
   let returnValue: any = [];
   const proposals = `{
     proposals(
@@ -31,6 +29,7 @@ async function getProposals(): Promise<any> {
         id
         name
       }
+      votes
     }
   }`;
   await axios
@@ -40,13 +39,16 @@ async function getProposals(): Promise<any> {
     .then(async (res) => {
       const proposals = res.data.data.proposals;
       for (const prop of proposals) {
-        fs.appendFileSync("./proposals.csv", prop.id + ",");
-        fs.appendFileSync("./proposals.csv", prop.author + ",");
-        fs.appendFileSync("./proposals.csv", prop.state + ",");
-        fs.appendFileSync("./proposals.csv", prop.scores[0] + ",");
-        fs.appendFileSync("./proposals.csv", prop.scores[1] + ",");
-        fs.appendFileSync("./proposals.csv", prop.scores_total + ",");
-        fs.appendFileSync("./proposals.csv", prop.created + "\n");
+        fs.appendFileSync("./proposals.csv", prop.id + "//");
+        fs.appendFileSync("./proposals.csv", prop.space.name + "//");
+        fs.appendFileSync("./proposals.csv", prop.space.id + "//");
+        fs.appendFileSync("./proposals.csv", prop.author + "//");
+        fs.appendFileSync("./proposals.csv", prop.state + "//");
+        fs.appendFileSync("./proposals.csv", prop.scores[0] + "//");
+        fs.appendFileSync("./proposals.csv", prop.scores[1] + "//");
+        fs.appendFileSync("./proposals.csv", prop.scores_total + "//");
+        fs.appendFileSync("./proposals.csv", prop.created + "//");
+        fs.appendFileSync("./proposals.csv", prop.votes + "\n");
       }
       returnValue = proposals;
     })
@@ -57,7 +59,7 @@ async function getProposals(): Promise<any> {
 }
 
 async function getVotes() {
-  //fs.unlinkSync("./votes.csv");
+  fs.unlinkSync("./votes.csv");
   const proposals = await getProposals();
   for (const prop of proposals) {
     fs.appendFileSync("./votes.csv", prop.id + ",");

@@ -1,10 +1,8 @@
 import axios from "axios";
-import Web3 from "web3";
 import fs from "fs";
-import { exit } from "process";
 
 async function getProposals(): Promise<any> {
-  //fs.unlinkSync("./proposals.csv");
+  fs.unlinkSync("./proposals.csv");
   let returnValue: any = [];
   const proposals = `{
     proposals(
@@ -57,8 +55,9 @@ async function getProposals(): Promise<any> {
 }
 
 async function getVotes() {
-  //fs.unlinkSync("./votes.csv");
+  fs.unlinkSync("./votes.csv");
   const proposals = await getProposals();
+  let continueLoop = true;
   for (const prop of proposals) {
     fs.appendFileSync("./votes.csv", prop.id + ",");
     for (let i = 0; i <= 100000; i += 1000) {
