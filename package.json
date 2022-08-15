@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@types/ethereum-block-by-date": "^1.4.1",
-    "@types/node": "^18.0.0"
+    "@types/node": "^18.0.0",
+    "gini": "^1.1.7"
   }
 }

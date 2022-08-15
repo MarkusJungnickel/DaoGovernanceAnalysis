@@ -17,40 +17,67 @@ import networkx.algorithms.community as nx_comm
 import networkx.algorithms as algo
 import community as community_louvain
 import seaborn as sns
+from enum import Enum
+import pandas as pd
+
+
+class Column(Enum):
+    PROPID = 0
+    SPACENAME = 1
+    SPACEID = 2
+    AUTHOR = 3
+    STATE = 4
+    FOR = 5
+    AGAINST = 6
+    TOTAL = 7
+    CREATED = 8
+    VOTES = 9
+    MEMBERS = 10
+    PROPOSALS = 11
+    PARTICIPATION = 12
+
 
 ###################### READ CSVS ###########################
 proposals = genfromtxt('../../Snapshot/overall/proposals.csv',
                        delimiter="//")
-emptyColumn = np.zeros((len(proposals[:, 0]), 1))
-proposals = np.append(proposals, emptyColumn, axis=1)
-spaces = genfromtxt('../../Snapshot/overall/spacesOld.csv',
-                    delimiter=',', dtype=str)
+spaces = genfromtxt('../../Snapshot/overall/spaces.csv',
+                    delimiter='//', dtype=str)
 proposalsStr = genfromtxt(
     '../../Snapshot/overall/proposals.csv', delimiter="//", dtype=str)
 
 ################### CLEAN & COMBINE DATA ####################
+
+emptyColumn = np.zeros((len(proposals[:, 0]), 1))
+for i in range(3):
+    proposals = np.append(proposals, emptyColumn, axis=1)
+
+
 assert(len(proposalsStr[:, 0]) == len(proposals[:, 0]))
 for idx, propStr in enumerate(proposalsStr):
-    space = spaces[spaces[:, 0] == propStr[2], :]
+    space = spaces[spaces[:, 0] == propStr[Column.SPACEID.value], :]
     if len(space) == 0:
-        space = [[0, 0]]
-    proposals[idx][-1] = int(space[0][1])
-proposals = proposals[proposals[:, -1] >= 50, :]
-proposals = proposals[~np.isnan(proposals[:, 5]), :]
-emptyColumn = np.zeros((len(proposals[:, 0]), 1))
-proposals = np.append(proposals, emptyColumn, axis=1)
+        space = [[0, 0, 0, 0]]
+    # members
+    proposals[idx][Column.MEMBERS.value] = int(space[0][2])
+    # proposals
+    proposals[idx][Column.PROPOSALS.value] = int(space[0][3])
 for prop in proposals:
-    if prop[-2] >= prop[-3]:
-        prop[-1] = prop[-3]/prop[-2]
+    if prop[Column.MEMBERS.value] >= prop[Column.VOTES.value]:
+        prop[Column.PARTICIPATION.value] = prop[Column.VOTES.value] / \
+            prop[Column.MEMBERS.value]
     else:
-        prop[-1] = 0
+        prop[Column.PARTICIPATION.value] = 0
 
+proposals = proposals[proposals[:, Column.MEMBERS.value] >= 50, :]
+proposals = proposals[~np.isnan(proposals[:, Column.FOR.value]), :]
+print(proposals[:, Column.PARTICIPATION.value])
 
 ###################### CONTROVERCY ###########################
-propOutcomes = np.empty((len(proposals[:, 1]), 4))
+propOutcomes = np.empty((len(proposals[:, 1]), 5))
 for idx, prop in enumerate(proposals):
-    propOutcomes[idx][0] = prop[-1]
-    propOutcomes[idx][3] = prop[-2]
+    propOutcomes[idx][0] = prop[Column.PARTICIPATION.value]
+    propOutcomes[idx][3] = prop[Column.MEMBERS.value]
+    propOutcomes[idx][4] = prop[Column.PROPOSALS.value]
     if prop[5] > prop[6]:
         propOutcomes[idx][1] = prop[5]/(prop[5]+prop[6])
         propOutcomes[idx][2] = 1
@@ -78,12 +105,25 @@ ax3.hexbin(propOutcomes[:, 0], propOutcomes[:, 1],
 ax3.set_ylim(0.5, 1)
 ax3.set_xlim(0, 1)
 
+# Proposals histrogram
+fig4, ax4 = plt.subplots()
+ax4.hist(propOutcomes[:, 4], edgecolor='white', linewidth=1.2, color="#4CB391")
+ax4.set_yscale("log")
+ax4.set_ylabel("Frequency")
+ax4.set_xlabel("# Proposals")
+
 # Controvercy jointplot hex
 sns.set_theme(style="ticks")
 s1 = sns.jointplot(x=propOutcomes[:, 0], y=propOutcomes[:, 1], kind="hex",
                    norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20))
 s1.ax_joint.set_xlabel('Quorum')
 s1.ax_joint.set_ylabel('Majority')
+
+outcomes = np.column_stack((propOutcomes[:, 0], propOutcomes[:, 1]))
+outcomes = pd.DataFrame(outcomes, columns=['Quorum', 'Majority'])
+print(outcomes)
+sns.set_theme(style="ticks")
+s5 = sns.regplot(data=outcomes, x="Quorum", y="Majority", scatter=False)
 
 # Controvercy by DAO size
 sns.set_theme(style="ticks")
@@ -99,9 +139,25 @@ s3 = sns.jointplot(x=propOutcomes[:, 3], y=propOutcomes[:, 0], kind="hex",
 s3.ax_joint.set_xlabel('Size')
 s3.ax_joint.set_ylabel('Quorum')
 
+# Quorum by DAO Proposals
+sns.set_theme(style="ticks")
+s4 = sns.jointplot(x=propOutcomes[:, 4], y=propOutcomes[:, 0], kind="hex",
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20), color="#4CB391")
+s4.ax_joint.set_xlabel('# Proposals')
+s4.ax_joint.set_ylabel('Quorum')
+
+# Controvercy by DAO Proposals
+sns.set_theme(style="ticks")
+s4 = sns.jointplot(x=propOutcomes[:, 4], y=propOutcomes[:, 1], kind="hex",
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20), color="#4CB391")
+s4.ax_joint.set_xlabel('# Proposals')
+s4.ax_joint.set_ylabel('Quorum')
+
+
 print("Median Size:", np.median(propOutcomes[:, 3]))
 print("Median Quorum:", np.median(propOutcomes[:, 0]))
 print("Median Majority:", np.average(propOutcomes[:, 1]))
+print("Median # Proposals:", np.average(propOutcomes[:, 4]))
 
 plt.show()
 

@@ -2,6 +2,7 @@ import axios from "axios";
 import fs from "fs";
 
 async function getspaces(): Promise<any> {
+  fs.unlinkSync("./spaces.csv");
   let returnValue: any = [];
   for (let i = 0; i <= 10000; i += 1000) {
     const spaces = `{
@@ -11,6 +12,8 @@ async function getspaces(): Promise<any> {
     ) {
       id
       name
+      followersCount
+      proposalsCount
     }
   }`;
     await axios
@@ -19,7 +22,13 @@ async function getspaces(): Promise<any> {
       })
       .then(async (res) => {
         const spaces = res.data.data.spaces;
-        returnValue = returnValue.concat(spaces);
+        console.log(spaces);
+        for (const space of spaces) {
+          fs.appendFileSync("./spaces.csv", space.id + "//");
+          fs.appendFileSync("./spaces.csv", space.name + "//");
+          fs.appendFileSync("./spaces.csv", space.followersCount + "//");
+          fs.appendFileSync("./spaces.csv", space.proposalsCount + "\n");
+        }
       })
       .catch((error) => {
         console.log(error);
@@ -61,5 +70,5 @@ async function getFollowers() {
   }
 }
 
-getFollowers();
-//getspaces();
+//getFollowers();
+getspaces();
