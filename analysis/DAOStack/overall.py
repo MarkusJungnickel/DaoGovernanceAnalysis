@@ -33,24 +33,29 @@ giniCoStr = genfromtxt(
     '../../onChain/DAOStack/overall/gini.csv', delimiter=",", dtype=str)
 
 # clean data
-giniCo = giniCo[giniCo[:, 1] >= 10, :]
+giniCo = giniCo[giniCo[:, 1] >= 15, :]
 giniCo = giniCo[giniCo[:, 1] <= 1000, :]
 
 
 # Gini histrogram
 fig2, ax2 = plt.subplots()
-ax2.hist(giniCo[:, 2], edgecolor='white', linewidth=1.2, color="#4CB391")
-ax2.set_ylabel("Frequency")
+ax2.set_box_aspect(1)
+ax2.hist(giniCo[:, 2], edgecolor='white', linewidth=1.2, color="indianred",
+         weights=np.ones_like(giniCo[:, 2]) / len(giniCo[:, 2]), bins=10)
+ax2.set_ylabel("Percent of DAOs")
+ax2.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1))
 ax2.set_xlabel("Gini")
 
 # Gini x Size
-fig3, ax3 = plt.subplots()
 sns.set_theme(style="ticks")
+fig3, ax3 = plt.subplots()
+ax3.set_box_aspect(1)
+
 s1 = sns.jointplot(x=giniCo[:, 1], y=giniCo[:, 2],
-                   kind="hex", marginal_kws=dict(bins=13), joint_kws=dict(gridsize=17))
-s1.ax_joint.set_xlabel('Size')
+                   kind="hex", marginal_kws=dict(bins=13), joint_kws=dict(gridsize=17), color="indianred")
+s1.ax_joint.set_xlabel('Number of Members')
 # norm=mpl.colors.LogNorm()
-# s1.ax_joint.set_xscale('log')
+
 # s1.ax_joint.set_ylim(0, 1)
 s1.ax_joint.set_ylabel('Gini')
 
@@ -129,14 +134,16 @@ print(np.sort(propOutcomes[:, 6]))
 # Controvercy jointplot hex
 fig4, ax4 = plt.subplots()
 sns.set_theme(style="ticks")
+ax4.set_box_aspect(1)
 s1 = sns.jointplot(x=propOutcomes[:, 0], y=propOutcomes[:, 1], kind="hex",
-                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=13), joint_kws=dict(gridsize=15))
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=13), joint_kws=dict(gridsize=15), color="indianred")
 s1.ax_joint.set_xlabel('Voters')
 s1.ax_joint.set_ylabel('Majority')
 
 # Controvercy histrogram
 fig5, ax5 = plt.subplots()
-ax5.hist(propOutcomes[:, 1], edgecolor='white', linewidth=1.2, color="#4CB391")
+ax5.hist(propOutcomes[:, 1], edgecolor='white',
+         linewidth=1.2, color="indianred")
 ax5.set_yscale("log")
 ax5.set_ylabel("Frequency")
 ax5.set_xlabel("Size of Majority")
@@ -152,11 +159,13 @@ ax5.set_xlabel("Size of Majority")
 
 
 # outcomes = np.append(propOutcomes[:, 1], propOutcomes[:, 5], axis=1)
+sns.set_theme(style="ticks", palette="hls")
 fig6, ax6 = plt.subplots()
+ax6.set_box_aspect(1)
 outcomes = np.column_stack((propOutcomes[:, 1], propOutcomes[:, 5]))
 outcomes = pd.DataFrame(outcomes, columns=['Share Majority', 'Vote Majority'])
-sns.set_theme(style="ticks")
-s3 = sns.lmplot(data=outcomes, x="Share Majority", y="Vote Majority")
+s3 = sns.lmplot(data=outcomes, x="Share Majority",
+                y="Vote Majority")
 
 fig7, ax7 = plt.subplots()
 outcomes = np.column_stack((propOutcomes[:, 1], propOutcomes[:, 5]))
@@ -167,11 +176,11 @@ s4 = sns.regplot(data=outcomes, x="Share Majority",
 
 
 ################ HOLOGRAPHIC CONSENSUS ##################
-
+sns.set_theme(style="ticks", palette="hls")
 fig8, ax8 = plt.subplots()
+ax8.set_box_aspect(1)
 outcomes = np.column_stack((propOutcomes[:, 1], propOutcomes[:, 6]))
 outcomes = pd.DataFrame(outcomes, columns=['Share Majority', 'Stake Majority'])
-sns.set_theme(style="ticks")
 s5 = sns.lmplot(data=outcomes, x="Share Majority", y="Stake Majority")
 
 fig9, ax9 = plt.subplots()

@@ -5,8 +5,10 @@ from matplotlib import cm, pyplot as plt
 from pygini import gini
 
 
-members = genfromtxt('../makerDAO/members.csv', delimiter=',')
-membersStr = genfromtxt('../makerDAO/members.csv', delimiter=',', dtype="str")
+members = genfromtxt(
+    '../onChain/ProtocolDAOs/makerDAO/members.csv', delimiter=',')
+membersStr = genfromtxt(
+    '../onChain/ProtocolDAOs/makerDAO/members.csv', delimiter=',', dtype="str")
 fig1, ax1 = plt.subplots()
 colors = plt.get_cmap('Blues')(np.linspace(0.2, 0.7, len(members[:, 1])))
 print(np.sum(members[:, 2]))

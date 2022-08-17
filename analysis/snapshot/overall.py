@@ -92,7 +92,8 @@ propOutcomes = propOutcomes[propOutcomes[:, 1] != 0, :]
 
 # Controvercy histrogram
 fig2, ax2 = plt.subplots()
-ax2.hist(propOutcomes[:, 1], edgecolor='white', linewidth=1.2, color="#4CB391")
+ax2.hist(propOutcomes[:, 1], edgecolor='white',
+         linewidth=1.2, color="steelblue")
 ax2.set_yscale("log")
 ax2.set_ylabel("Frequency")
 ax2.set_xlabel("Size of Majority")
@@ -126,9 +127,10 @@ sns.set_theme(style="ticks")
 s5 = sns.regplot(data=outcomes, x="Quorum", y="Majority", scatter=False)
 
 # Controvercy by DAO size
+# sns.set_theme(style="ticks", palette="vlag")
 sns.set_theme(style="ticks")
 s2 = sns.jointplot(x=propOutcomes[:, 3], y=propOutcomes[:, 1], kind="hex",
-                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20), color="#4CB391")
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=20))
 s2.ax_joint.set_xlabel('Size')
 s2.ax_joint.set_ylabel('Majority')
 

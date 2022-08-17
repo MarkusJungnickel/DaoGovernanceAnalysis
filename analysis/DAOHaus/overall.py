@@ -38,22 +38,28 @@ print(giniCo)
 
 # Gini histrogram
 fig2, ax2 = plt.subplots()
-ax2.hist(giniCo[:, 2], edgecolor='white', linewidth=1.2, color="#4CB391")
-ax2.set_ylabel("Frequency")
+ax2.set_box_aspect(1)
+ax2.hist(giniCo[:, 2], edgecolor='white', linewidth=1.2, color="#4CB391",
+         weights=np.ones_like(giniCo[:, 2]) / len(giniCo[:, 2]), bins=10)
+ax2.set_ylabel("Percent of DAOs")
+ax2.yaxis.set_major_formatter(mpl.ticker.PercentFormatter(1))
 ax2.set_xlabel("Gini")
 
 # Gini x Size
 fig3, ax3 = plt.subplots()
+ax3.set_box_aspect(1)
 sns.set_theme(style="ticks")
 s1 = sns.jointplot(x=giniCo[:, 1], y=giniCo[:, 2],
-                   kind="hex", marginal_kws=dict(bins=13), joint_kws=dict(gridsize=15))
-s1.ax_joint.set_xlabel('Size')
+                   kind="hex", marginal_kws=dict(bins=13), joint_kws=dict(gridsize=15), color="#4CB391")
+s1.ax_joint.set_xlabel('Number of Members')
 # norm=mpl.colors.LogNorm()
 # s1.ax_joint.set_xscale('log')
 # s1.ax_joint.set_ylim(0, 1)
 s1.ax_joint.set_ylabel('Gini')
 
 print("Median gini:", np.median(giniCo[:, 2]))
+print("Mean gini:", np.average(giniCo[:, 2]))
+print("StandardDev gini:", np.std(giniCo[:, 2]))
 
 #################### CONTROVERCY #########################
 
@@ -101,16 +107,17 @@ print(np.count_nonzero(propOutcomes[:, 4])/len(propOutcomes[:, 4]))
 # Controvercy jointplot hex
 fig4, ax4 = plt.subplots()
 sns.set_theme(style="ticks")
+ax4.set_box_aspect(1)
 s1 = sns.jointplot(x=propOutcomes[:, 0], y=propOutcomes[:, 1], kind="hex",
-                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=13), joint_kws=dict(gridsize=15))
-s1.ax_joint.set_xlabel('Quorum')
+                   norm=mpl.colors.LogNorm(), marginal_kws=dict(bins=13), joint_kws=dict(gridsize=15), color="#4CB391")
+s1.ax_joint.set_xlabel('Voters')
 s1.ax_joint.set_ylabel('Majority')
 
 # Controvercy histrogram
 fig5, ax5 = plt.subplots()
 ax5.hist(propOutcomes[:, 1], edgecolor='white', linewidth=1.2, color="#4CB391")
 ax5.set_yscale("log")
-ax5.set_ylabel("Frequency")
+ax5.set_ylabel("Frequency (log)")
 ax5.set_xlabel("Size of Majority")
 
 
@@ -124,11 +131,13 @@ ax5.set_xlabel("Size of Majority")
 
 
 # outcomes = np.append(propOutcomes[:, 1], propOutcomes[:, 5], axis=1)
+sns.set_theme(style="ticks", palette="Set2")
 fig6, ax6 = plt.subplots()
+ax6.set_box_aspect(1)
 outcomes = np.column_stack((propOutcomes[:, 1], propOutcomes[:, 5]))
 outcomes = pd.DataFrame(outcomes, columns=['Share Majority', 'Vote Majority'])
 print(outcomes)
-sns.set_theme(style="ticks")
+
 s3 = sns.lmplot(data=outcomes, x="Share Majority", y="Vote Majority")
 
 fig7, ax7 = plt.subplots()
